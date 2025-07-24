@@ -1,23 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "../lib/utils";
 
 const skills = [
-  // Frontend
   { name: "HTML/CSS", level: 95, category: "frontend" },
   { name: "JavaScript", level: 90, category: "frontend" },
   { name: "React", level: 90, category: "frontend" },
   { name: "TypeScript", level: 85, category: "frontend" },
   { name: "Tailwind CSS", level: 90, category: "frontend" },
   { name: "Next.js", level: 80, category: "frontend" },
-
-  // Backend
   { name: "Node.js", level: 80, category: "backend" },
   { name: "Express", level: 75, category: "backend" },
   { name: "MongoDB", level: 70, category: "backend" },
-  
-  
-
-  // Tools
   { name: "Git/GitHub", level: 90, category: "tools" },
   { name: "Docker", level: 70, category: "tools" },
   { name: "Figma", level: 55, category: "tools" },
@@ -30,50 +23,79 @@ const categories = ["all", "frontend", "backend", "tools"];
 export const SkillsSection = () => {
   const [activeCategory, setActiveCategory] = useState("all");
   const [animatedWidths, setAnimatedWidths] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
   const sectionRef = useRef(null);
+  const observerRef = useRef(null); // Track observer
 
   const filteredSkills = skills.filter(
     (skill) => activeCategory === "all" || skill.category === activeCategory
   );
 
-  // Animate when section is in view
+  // Detect mobile screen
+  const checkIsMobile = useCallback(() => {
+    setIsMobile(window.innerWidth <= 768);
+  }, []);
+
+  useEffect(() => {
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, [checkIsMobile]);
+
+  // Trigger animation manually if already in view
+  const triggerAnimation = () => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const rect = section.getBoundingClientRect();
+    const isVisible =
+      rect.top < window.innerHeight && rect.bottom >= 0;
+
+    if (isVisible && !isMobile) {
+      setAnimatedWidths(Array(filteredSkills.length).fill(0));
+      setTimeout(() => {
+        setAnimatedWidths(filteredSkills.map((skill) => skill.level));
+      }, 200);
+    } else if (isMobile) {
+      setAnimatedWidths(filteredSkills.map((skill) => skill.level));
+    } else {
+      setAnimatedWidths(Array(filteredSkills.length).fill(0));
+    }
+  };
+
+  // Handle tab change or resize or load
+  useEffect(() => {
+    triggerAnimation();
+  }, [activeCategory, filteredSkills.length, isMobile]);
+
+  // Setup observer for scroll-based animation (desktop)
   useEffect(() => {
     const section = sectionRef.current;
-    let observer;
-    let timeout;
-    if (section) {
-      observer = new window.IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            setAnimatedWidths(Array(filteredSkills.length).fill(0));
-            timeout = setTimeout(() => {
-              setAnimatedWidths(filteredSkills.map((skill) => skill.level));
-            }, 200);
-          } else {
-            setAnimatedWidths(Array(filteredSkills.length).fill(0));
-          }
-        },
-        { threshold: 0.3 }
-      );
-      observer.observe(section);
-    }
-    return () => {
-      if (observer && section) observer.unobserve(section);
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [activeCategory, filteredSkills.length]);
+    if (!section || isMobile) return;
 
-  // Animate on hover (optional, can be removed if not needed)
-  // const handleMouseEnter = (idx, level) => {
-  //   setAnimatedWidths((prev) =>
-  //     prev.map((w, i) => (i === idx ? 0 : w))
-  //   );
-  //   setTimeout(() => {
-  //     setAnimatedWidths((prev) =>
-  //       prev.map((w, i) => (i === idx ? level : w))
-  //     );
-  //   }, 50);
-  // };
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setAnimatedWidths(Array(filteredSkills.length).fill(0));
+          setTimeout(() => {
+            setAnimatedWidths(filteredSkills.map((skill) => skill.level));
+          }, 200);
+        } else {
+          setAnimatedWidths(Array(filteredSkills.length).fill(0));
+        }
+      },
+      { threshold: 0.3 }
+    );
+
+    observer.observe(section);
+    observerRef.current = observer;
+
+    return () => observer.disconnect();
+  }, [filteredSkills.length, isMobile]);
 
   return (
     <section
@@ -87,15 +109,15 @@ export const SkillsSection = () => {
         </h2>
 
         <div className="flex flex-wrap justify-center gap-4 mb-12">
-          {categories.map((category, key) => (
+          {categories.map((category) => (
             <button
-              key={key}
+              key={category}
               onClick={() => setActiveCategory(category)}
               className={cn(
                 "px-5 py-2 rounded-full transition-colors duration-300 capitalize",
                 activeCategory === category
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary/70 text-forefround hover:bd-secondary"
+                  : "bg-secondary/70 text-foreground hover:bd-secondary"
               )}
             >
               {category}
@@ -104,20 +126,19 @@ export const SkillsSection = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredSkills.map((skill, key) => (
+          {filteredSkills.map((skill, index) => (
             <div
               key={skill.name}
               className="bg-card p-6 rounded-lg shadow-xs card-hover"
-              onMouseEnter={() => handleMouseEnter(key, skill.level)}
             >
               <div className="text-left mb-4">
                 <h3 className="font-semibold text-lg">{skill.name}</h3>
               </div>
               <div className="w-full bg-secondary/50 h-2 rounded-full overflow-hidden">
                 <div
-                  className="bg-primary h-2 rounded-full origin-left transition-all duration-1000"
+                  className="bg-primary h-2 rounded-full origin-left transition-[width] duration-[1500ms] ease-in-out will-change-[width]"
                   style={{
-                    width: `${animatedWidths[key]}%`,
+                    width: `${animatedWidths[index] ?? 0}%`,
                   }}
                 />
               </div>
