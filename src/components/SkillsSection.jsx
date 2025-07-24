@@ -36,9 +36,7 @@ export const SkillsSection = () => {
     (skill) => activeCategory === "all" || skill.category === activeCategory
   );
 
-  // Helper to detect mobile screen
-  const isMobile = () => window.innerWidth < 640;
-
+  // Animate when section is in view
   useEffect(() => {
     const section = sectionRef.current;
     let observer;
@@ -47,16 +45,10 @@ export const SkillsSection = () => {
       observer = new window.IntersectionObserver(
         (entries) => {
           if (entries[0].isIntersecting) {
-            if (isMobile()) {
-              // On mobile, set instantly to full width (no animation)
+            setAnimatedWidths(Array(filteredSkills.length).fill(0));
+            timeout = setTimeout(() => {
               setAnimatedWidths(filteredSkills.map((skill) => skill.level));
-            } else {
-              // On desktop/tablet, animate
-              setAnimatedWidths(Array(filteredSkills.length).fill(0));
-              timeout = setTimeout(() => {
-                setAnimatedWidths(filteredSkills.map((skill) => skill.level));
-              }, 200);
-            }
+            }, 200);
           } else {
             setAnimatedWidths(Array(filteredSkills.length).fill(0));
           }
@@ -72,17 +64,16 @@ export const SkillsSection = () => {
   }, [activeCategory, filteredSkills.length]);
 
   // Animate on hover (optional, can be removed if not needed)
-  const handleMouseEnter = (idx, level) => {
-    if (isMobile()) return; // No animation on mobile
-    setAnimatedWidths((prev) =>
-      prev.map((w, i) => (i === idx ? 0 : w))
-    );
-    setTimeout(() => {
-      setAnimatedWidths((prev) =>
-        prev.map((w, i) => (i === idx ? level : w))
-      );
-    }, 50);
-  };
+  // const handleMouseEnter = (idx, level) => {
+  //   setAnimatedWidths((prev) =>
+  //     prev.map((w, i) => (i === idx ? 0 : w))
+  //   );
+  //   setTimeout(() => {
+  //     setAnimatedWidths((prev) =>
+  //       prev.map((w, i) => (i === idx ? level : w))
+  //     );
+  //   }, 50);
+  // };
 
   return (
     <section
@@ -124,9 +115,7 @@ export const SkillsSection = () => {
               </div>
               <div className="w-full bg-secondary/50 h-2 rounded-full overflow-hidden">
                 <div
-                  className={`bg-primary h-2 rounded-full origin-left ${
-                    isMobile() ? "" : "transition-all duration-1000"
-                  }`}
+                  className="bg-primary h-2 rounded-full origin-left transition-all duration-1000"
                   style={{
                     width: `${animatedWidths[key]}%`,
                   }}
