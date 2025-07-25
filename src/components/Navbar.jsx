@@ -1,6 +1,7 @@
 import { cn } from "../lib/utils";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 const navItems = [
   { name: "Home", href: "#hero" },
@@ -16,9 +17,8 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 80); // Show solid bg after 80px scroll
+      setIsScrolled(window.scrollY > 80);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -44,7 +44,7 @@ const Navbar = () => {
         </a>
 
         {/* desktop nav */}
-        <div className="hidden md:flex space-x-8">
+        <div className="hidden md:flex items-center space-x-8">
           {navItems.map((item, key) => (
             <a
               key={key}
@@ -54,16 +54,21 @@ const Navbar = () => {
               {item.name}
             </a>
           ))}
+          {/* Theme toggle button on right side */}
+          <ThemeToggle />
         </div>
 
-        {/* mobile nav */}
-        <button
-          onClick={() => setIsMenuOpen((prev) => !prev)}
-          className="md:hidden p-2 text-foreground z-50"
-          aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
-        >
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}{" "}
-        </button>
+        {/* mobile nav: hamburger + theme toggle side by side */}
+        <div className="flex md:hidden items-center gap-4">
+          <ThemeToggle />
+          <button
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="p-2 text-foreground z-50"
+            aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
 
         <div
           className={cn(
