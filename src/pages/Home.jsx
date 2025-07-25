@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import Lenis from "@studio-freight/lenis";
 import StarBackground from '../components/StarBackground';
 import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
@@ -9,9 +11,35 @@ import { Contact } from 'lucide-react';
 import { ArrowUp } from 'lucide-react';
 
 const Home = () => {
-  // Scroll to top handler
+  useEffect(() => {
+    const lenis = new Lenis({
+      lerp: 0.1,
+      smooth: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    // Make lenis available globally for scrollTo
+    window.lenis = lenis;
+
+    return () => {
+      lenis.destroy();
+      window.lenis = undefined;
+    };
+  }, []);
+
+  // Scroll to top handler using Lenis
   const handleScrollTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (window.lenis) {
+      window.lenis.scrollTo(0, { duration: 1.2 });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
