@@ -1,7 +1,7 @@
 
 
 import { Briefcase, Code, User } from "lucide-react";
-import cvFile from "../assets/cv/cv.pdf"; // Ensure this path is correct
+import cvFile from "../assets/cv/2025_prattay_das_resume.pdf"; // Ensure this path is correct
  const AboutSection = () => {
   return (
     <section id="about" className="py-24 px-4 relative">
